@@ -1,0 +1,22 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int balance = 1000;
+    vector<int> transactions = {200, -150, -500, -400, -50, -200, 300};
+    vector<int> tobeprocessed;
+
+    cout << "Initial balance: " << balance << " AED" << endl;
+
+    for (int transaction : transactions) {
+        if (transaction < 0) {
+            if (balance + transaction < 0) {
+                cout << "Invalid transaction: Withdrawal of " << -transaction << " AED exceeds current balance. Skipping this transaction." << endl;
+                tobeprocessed.push_back(transaction);
+                continue;
+            }
+        }
+
+        balance += transaction;
+       
