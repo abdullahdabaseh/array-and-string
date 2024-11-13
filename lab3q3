@@ -1,0 +1,38 @@
+#define NUM_TEAMS 4  // Example: 4 teams in the league
+#define SQUAD_SIZE 20  // Example: each team has up to 20 players
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#define NUM_TEAMS 4
+#define SQUAD_SIZE 20
+
+typedef struct {
+    int day;
+    int month;
+    int year;
+} age_t;
+typedef struct {
+    char name[26]; 
+    int kit_number;
+    char club[31];  
+    age_t age;
+    char position[20];
+} player_t;
+typedef struct {
+    char name[21]; 
+    player_t players[SQUAD_SIZE];
+    int active_size;
+} team_t;
+team_t teams[NUM_TEAMS];
+int current_teams = 0;
+void display_menu();
+void enroll_club();
+void add_player();
+void search_update();
+void display_club_statistics();
+void handle_error(const char *msg);
+void to_lower_str(char *str);
+int find_team_index(const char *name);
+int find_player_index(int team_index, const char *name, int kit_number);
+float calculate_average_age(int team_index);
