@@ -1,9 +1,8 @@
-#define NUM_TEAMS 4  // Example: 4 teams in the league
-#define SQUAD_SIZE 20  // Example: each team has up to 20 players
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #define NUM_TEAMS 4
 #define SQUAD_SIZE 20
 
@@ -12,27 +11,232 @@ typedef struct {
     int month;
     int year;
 } age_t;
+
 typedef struct {
-    char name[26]; 
+    char name[26];  // Maximum total size: 25 + 1 for null terminator
     int kit_number;
-    char club[31];  
+    char club[31];  // Allowing space for names with spaces
     age_t age;
     char position[20];
 } player_t;
+
 typedef struct {
-    char name[21]; 
+    char name[21];  // Maximum total size: 20 + 1 for null terminator
     player_t players[SQUAD_SIZE];
     int active_size;
 } team_t;
+
 team_t teams[NUM_TEAMS];
 int current_teams = 0;
+
+// Function prototypes
 void display_menu();
-void enroll_club();
-void add_player();
+void enroll_club(const char *club_name);
+void add_player(const char *club_name, const char *player_name, int kit_number, int day, int month, int year, const char *position);
 void search_update();
 void display_club_statistics();
 void handle_error(const char *msg);
-void to_lower_str(char *str);
 int find_team_index(const char *name);
 int find_player_index(int team_index, const char *name, int kit_number);
 float calculate_average_age(int team_index);
+
+int main() {
+    enroll_club("Jordan");
+    add_player("Jordan", "Moussa Al Tamari", 10, 10, 10, 1997, "Midfielder");
+
+    int choice;
+    while (1) {
+        display_menu();
+        scanf("%d", &choice);
+        switch (choice) {
+            case 1:
+                {
+                char club_name[21];
+                printf("Enter the club name: ");
+                scanf(" %[^\n]s", club_name);
+                enroll_club(club_name);
+                break;
+                }
+            case 2:
+                {
+                char club_name[21];
+                char player_name[26];
+                int kit_number;
+                int day, month, year;
+                char position[20];
+                
+                printf("Enter the club name: ");
+                scanf(" %[^\n]s", club_name);
+                printf("Enter player name: ");
+                scanf(" %[^\n]s", player_name);
+                printf("Enter player kit number (1-99): ");
+                scanf("%d", &kit_number);
+                printf("Enter player position: ");
+                scanf(" %[^\n]s", position);
+                printf("Enter player date of birth (DD MM YYYY): ");
+                scanf("%d %d %d", &day, &month, &year);
+                
+                add_player(club_name, player_name, kit_number, day, month, year, position);
+                break;
+                }
+            case 3:
+                search_update();
+                break;
+            case 4:
+                display_club_statistics();
+                break;
+            default:
+                printf("Exiting program. Goodbye!\n");
+                exit(0);
+        }
+    }
+    return 0;
+}
+
+void display_menu() {
+    printf("\n--- Competition League Menu ---\n");
+    printf("1. Enroll a new club\n");
+    printf("2. Add a player to a club\n");
+    printf("3. Search and update player details\n");
+    printf("4. Display club statistics\n");
+    printf("5. Exit\n");
+    printf("Enter your choice: ");
+}
+
+void enroll_club(const char *club_name) {
+    if (current_teams >= NUM_TEAMS) {
+        handle_error("Maximum number of clubs already enrolled.");
+        return;
+    }
+    
+    strcpy(teams[current_teams].name, club_name);
+    teams[current_teams].active_size = 0;
+    current_teams++;
+    printf("Club %s enrolled successfully.\n", club_name);
+}
+
+void add_player(const char *club_name, const char *player_name, int kit_number, int day, int month, int year, const char *position) {
+    int team_index = find_team_index(club_name);
+    if (team_index == -1) {
+        handle_error("Club not found.");
+        return;
+    }
+    
+    if (teams[team_index].active_size >= SQUAD_SIZE) {
+        handle_error("The selected club's squad is full.");
+        return;
+    }
+
+    player_t new_player;
+    strcpy(new_player.name, player_name);
+    new_player.kit_number = kit_number;
+    strcpy(new_player.club, club_name);
+    new_player.age.day = day;
+    new_player.age.month = month;
+    new_player.age.year = year;
+    strcpy(new_player.position, position);
+
+    for (int i = 0; i < teams[team_index].active_size; i++) {
+        if (strcasecmp(teams[team_index].players[i].name, new_player.name) == 0 ||
+            teams[team_index].players[i].kit_number == new_player.kit_number) {
+            handle_error("Duplicate player name or kit number found.");
+            return;
+        }
+    }
+    
+    teams[team_index].players[teams[team_index].active_size] = new_player;
+    teams[team_index].active_size++;
+    printf("Player %s added successfully to club %s.\n", player_name, club_name);
+}
+
+void search_update() {
+    char search_name[26];
+    int search_kit;
+
+    printf("Enter player name or kit number to search: ");
+    scanf(" %[^\n]s", search_name);
+
+    for (int i = 0; i < current_teams; i++) {
+        for (int j = 0; j < teams[i].active_size; j++) {
+            if (strcasecmp(teams[i].players[j].name, search_name) == 0 || 
+                teams[i].players[j].kit_number == atoi(search_name)) {
+                printf("Player found: %s, Kit: %d, Club: %s, Position: %s, DOB: %d/%d/%d\n", 
+                       teams[i].players[j].name, 
+                       teams[i].players[j].kit_number, 
+                       teams[i].players[j].club, 
+                       teams[i].players[j].position, 
+                       teams[i].players[j].age.day, 
+                       teams[i].players[j].age.month, 
+                       teams[i].players[j].age.year);
+                       
+                printf("Update player details (name kit club position DD MM YYYY): ");
+                scanf(" %[^\n]s %d %[^\n]s %[^\n]s %d %d %d", 
+                      teams[i].players[j].name, 
+                      &teams[i].players[j].kit_number, 
+                      teams[i].players[j].club, 
+                      teams[i].players[j].position, 
+                      &teams[i].players[j].age.day, 
+                      &teams[i].players[j].age.month, 
+                      &teams[i].players[j].age.year);
+                printf("Player details updated.\n");
+                return;
+            }
+        }
+    }
+    
+    handle_error("Player not found.");
+}
+
+void display_club_statistics() {
+    if (current_teams == 0) {
+        handle_error("No clubs enrolled yet.");
+        return;
+    }
+
+    for (int i = 0; i < current_teams; i++) {
+        printf("\nClub: %s\n", teams[i].name);
+        printf("Number of players: %d\n", teams[i].active_size);
+        printf("Average age: %.2f\n", calculate_average_age(i));
+        
+        for (int j = 0; j < teams[i].active_size; j++) {
+            printf("Player: %s, Kit: %d, Position: %s, DOB: %d/%d/%d\n", 
+                   teams[i].players[j].name, 
+                   teams[i].players[j].kit_number, 
+                   teams[i].players[j].position, 
+                   teams[i].players[j].age.day, 
+                   teams[i].players[j].age.month, 
+                   teams[i].players[j].age.year);
+        }
+    }
+}
+
+void handle_error(const char *msg) {
+    printf("Error: %s\n", msg);
+}
+
+int find_team_index(const char *name) {
+    for (int i = 0; i < current_teams; i++) {
+        if (strcasecmp(teams[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int find_player_index(int team_index, const char *name, int kit_number) {
+    for (int i = 0; i < teams[team_index].active_size; i++) {
+        if (strcasecmp(teams[team_index].players[i].name, name) == 0 || 
+            teams[team_index].players[i].kit_number == kit_number) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+float calculate_average_age(int team_index) {
+    int total_years = 0;
+    for (int i = 0; i < teams[team_index].active_size; i++) {
+        total_years += 2024 - teams[team_index].players[i].age.year;  // Replace 2024 with the current year
+    }
+    return (float) total_years / teams[team_index].active_size;
+}
